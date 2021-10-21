@@ -1,11 +1,26 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
+import * as cucumberjs from "./cucumberjs-data";
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-	
+	//register features view
+	const cucumberFeatureData = new cucumberjs.CucumberFeatureDataProvider();
+	vscode.window.registerTreeDataProvider("cucumberjs_features",cucumberFeatureData);
+
+	vscode.commands.registerCommand("cucumberjs_features.openChild",args => {
+		vscode.window.showInformationMessage(args);
+	});
+
+	vscode.commands.registerCommand('extension.openScenario', uri => cucumberFeatureData.jumpToFile(uri));
+
+	//register steps view
+	const cucumberStepDefData = new cucumberjs.CucumberStepDefDataProvider();
+	vscode.window.registerTreeDataProvider("cucumberjs_steps",cucumberStepDefData);
+	vscode.commands.registerCommand('extension.openStepDef', uri => cucumberStepDefData.jumpToFile(uri));
+
 	// Use the console to output diagnostic information (console.log) and errors (console.error)
 	// This line of code will only be executed once when your extension is activated
 	console.log('Congratulations, your extension "vscode-cucumberjs-navigator" is now active!');

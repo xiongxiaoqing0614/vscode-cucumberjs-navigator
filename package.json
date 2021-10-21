@@ -3,6 +3,10 @@
 	"displayName": "vscode-cucumberjs-navigator",
 	"description": "",
 	"version": "0.0.1",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/xiongxiaoqing0614/vscode-cucumberjs-navigator"
+	},
 	"engines": {
 		"vscode": "^1.61.0"
 	},
@@ -10,16 +14,24 @@
 		"Other"
 	],
 	"activationEvents": [
-        "onCommand:vscode-cucumberjs-navigator.helloWorld"
+		"onView:cucumberjs_features",
+		"onView:cucumberjs_steps"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
-		"commands": [
-			{
-				"command": "vscode-cucumberjs-navigator.helloWorld",
-				"title": "Hello World"
-			}
-		]
+		"views": {
+			"explorer": [
+				{
+					"id": "cucumberjs_features",
+					"name": "features",
+					"contextualTitle": "CucumberFeatures"
+				},
+				{
+					"id": "cucumberjs_steps",
+					"name": "steps"
+				}
+			]
+		}
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
@@ -40,6 +52,12 @@
 		"glob": "^7.1.7",
 		"mocha": "^9.1.1",
 		"typescript": "^4.4.3",
-		"@vscode/test-electron": "^1.6.2"
+		"@vscode/test-electron": "^1.6.2",
+		"@types/mkdirp": "^0.5.2",
+		"@types/rimraf": "^2.0.2"
+	},
+	"dependencies": {
+		"mkdirp": "^0.5.1",
+		"rimraf": "^2.6.2"
 	}
 }
