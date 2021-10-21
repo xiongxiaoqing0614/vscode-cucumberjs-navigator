@@ -356,7 +356,7 @@ export class CucumberFeatureDataProvider extends CucumberFileProvider implements
 			}
 		}
 	}
-    
+
     onDidChangeTreeData?: vscode.Event<void | EntryItem | null | undefined> | undefined;
     getTreeItem(element: EntryItem): vscode.TreeItem | Thenable<vscode.TreeItem> {
 		const treeItem = new vscode.TreeItem(element.uri, element.type === CucumberType.Scenario ? vscode.TreeItemCollapsibleState.None : vscode.TreeItemCollapsibleState.Collapsed);
@@ -400,7 +400,7 @@ export class CucumberFeatureDataProvider extends CucumberFileProvider implements
 
 		const workspaceFolder = vscode.workspace.workspaceFolders!.filter(folder => folder.uri.scheme === 'file')[0];
 		if (workspaceFolder) {
-            const featuresUri = vscode.Uri.file(workspaceFolder.uri.fsPath+"/features/testcase");
+            const featuresUri = vscode.Uri.file(workspaceFolder.uri.fsPath+"/features/testcases");
 			const children = await this.readDirectory(featuresUri);
 			children.sort((a, b) => {
 				if (a[1] === b[1]) {
@@ -408,7 +408,7 @@ export class CucumberFeatureDataProvider extends CucumberFileProvider implements
 				}
 				return a[1] === vscode.FileType.Directory ? -1 : 1;
 			});
-			return children.map(([name, type]) => ({ uri: vscode.Uri.file(path.join(workspaceFolder.uri.fsPath+"/features/testcase", name)), type }));
+			return children.map(([name, type]) => ({ uri: vscode.Uri.file(path.join(workspaceFolder.uri.fsPath+"/features/testcases", name)), type }));
 		}
 
 		return [];
