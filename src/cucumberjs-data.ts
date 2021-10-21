@@ -170,11 +170,10 @@ export class FileStat implements vscode.FileStat {
 	}
 }
 
-//Features 
-export class CucumberFeatureDataProvider implements vscode.TreeDataProvider<EntryItem>, vscode.FileSystemProvider 
-{
+//Base class
+export class CucumberFileProvider implements  vscode.FileSystemProvider {
 
-    private _onDidChangeEventEmitter: vscode.EventEmitter<vscode.FileChangeEvent[]>;
+    protected _onDidChangeEventEmitter: vscode.EventEmitter<vscode.FileChangeEvent[]>;
 
 	constructor() {
 		this._onDidChangeEventEmitter = new vscode.EventEmitter<vscode.FileChangeEvent[]>();
@@ -225,6 +224,71 @@ export class CucumberFeatureDataProvider implements vscode.TreeDataProvider<Entr
 		return Promise.resolve(result);
 	}
 
+
+	createDirectory(uri: vscode.Uri): void | Thenable<void> {
+		return _.mkdir(uri.fsPath);
+	}
+
+	readFile(uri: vscode.Uri): Uint8Array | Thenable<Uint8Array> {
+		return _.readfile(uri.fsPath);
+	}
+
+	writeFile(uri: vscode.Uri, content: Uint8Array, options: { create: boolean; overwrite: boolean; }): void | Thenable<void> {
+		return this._writeFile(uri, content, options);
+	}
+
+	async _writeFile(uri: vscode.Uri, content: Uint8Array, options: { create: boolean; overwrite: boolean; }): Promise<void> {
+		const exists = await _.exists(uri.fsPath);
+		if (!exists) {
+			if (!options.create) {
+				throw vscode.FileSystemError.FileNotFound();
+			}
+
+			await _.mkdir(path.dirname(uri.fsPath));
+		} else {
+			if (!options.overwrite) {
+				throw vscode.FileSystemError.FileExists();
+			}
+		}
+
+		return _.writefile(uri.fsPath, content as Buffer);
+	}
+
+	delete(uri: vscode.Uri, options: { recursive: boolean; }): void | Thenable<void> {
+		if (options.recursive) {
+			return _.rmrf(uri.fsPath);
+		}
+
+		return _.unlink(uri.fsPath);
+	}
+
+	rename(oldUri: vscode.Uri, newUri: vscode.Uri, options: { overwrite: boolean; }): void | Thenable<void> {
+		return this._rename(oldUri, newUri, options);
+	}
+
+	async _rename(oldUri: vscode.Uri, newUri: vscode.Uri, options: { overwrite: boolean; }): Promise<void> {
+		const exists = await _.exists(newUri.fsPath);
+		if (exists) {
+			if (!options.overwrite) {
+				throw vscode.FileSystemError.FileExists();
+			} else {
+				await _.rmrf(newUri.fsPath);
+			}
+		}
+
+		const parentExists = await _.exists(path.dirname(newUri.fsPath));
+		if (!parentExists) {
+			await _.mkdir(path.dirname(newUri.fsPath));
+		}
+
+		return _.rename(oldUri.fsPath, newUri.fsPath);
+	}
+}
+
+
+//Features 
+export class CucumberFeatureDataProvider extends CucumberFileProvider implements vscode.TreeDataProvider<EntryItem>
+{
     parseCucumberFeatureFile(uri: vscode.Uri): [string, CucumberJSType][] | Thenable<[string, CucumberJSType][]> {
 		return this._parseCucumberFeatureFile(uri);
 	}
@@ -292,66 +356,7 @@ export class CucumberFeatureDataProvider implements vscode.TreeDataProvider<Entr
 			}
 		}
 	}
-
-	createDirectory(uri: vscode.Uri): void | Thenable<void> {
-		return _.mkdir(uri.fsPath);
-	}
-
-	readFile(uri: vscode.Uri): Uint8Array | Thenable<Uint8Array> {
-		return _.readfile(uri.fsPath);
-	}
-
-	writeFile(uri: vscode.Uri, content: Uint8Array, options: { create: boolean; overwrite: boolean; }): void | Thenable<void> {
-		return this._writeFile(uri, content, options);
-	}
-
-	async _writeFile(uri: vscode.Uri, content: Uint8Array, options: { create: boolean; overwrite: boolean; }): Promise<void> {
-		const exists = await _.exists(uri.fsPath);
-		if (!exists) {
-			if (!options.create) {
-				throw vscode.FileSystemError.FileNotFound();
-			}
-
-			await _.mkdir(path.dirname(uri.fsPath));
-		} else {
-			if (!options.overwrite) {
-				throw vscode.FileSystemError.FileExists();
-			}
-		}
-
-		return _.writefile(uri.fsPath, content as Buffer);
-	}
-
-	delete(uri: vscode.Uri, options: { recursive: boolean; }): void | Thenable<void> {
-		if (options.recursive) {
-			return _.rmrf(uri.fsPath);
-		}
-
-		return _.unlink(uri.fsPath);
-	}
-
-	rename(oldUri: vscode.Uri, newUri: vscode.Uri, options: { overwrite: boolean; }): void | Thenable<void> {
-		return this._rename(oldUri, newUri, options);
-	}
-
-	async _rename(oldUri: vscode.Uri, newUri: vscode.Uri, options: { overwrite: boolean; }): Promise<void> {
-		const exists = await _.exists(newUri.fsPath);
-		if (exists) {
-			if (!options.overwrite) {
-				throw vscode.FileSystemError.FileExists();
-			} else {
-				await _.rmrf(newUri.fsPath);
-			}
-		}
-
-		const parentExists = await _.exists(path.dirname(newUri.fsPath));
-		if (!parentExists) {
-			await _.mkdir(path.dirname(newUri.fsPath));
-		}
-
-		return _.rename(oldUri.fsPath, newUri.fsPath);
-	}
-
+    
     onDidChangeTreeData?: vscode.Event<void | EntryItem | null | undefined> | undefined;
     getTreeItem(element: EntryItem): vscode.TreeItem | Thenable<vscode.TreeItem> {
 		const treeItem = new vscode.TreeItem(element.uri, element.type === CucumberType.Scenario ? vscode.TreeItemCollapsibleState.None : vscode.TreeItemCollapsibleState.Collapsed);
@@ -411,59 +416,8 @@ export class CucumberFeatureDataProvider implements vscode.TreeDataProvider<Entr
 }
 
 //StepDefinition
-export class CucumberStepDefDataProvider implements vscode.TreeDataProvider<EntryItem>, vscode.FileSystemProvider 
+export class CucumberStepDefDataProvider extends CucumberFileProvider implements vscode.TreeDataProvider<EntryItem>
 {
-    private _onDidChangeEventEmitter: vscode.EventEmitter<vscode.FileChangeEvent[]>;
-
-	constructor() {
-		this._onDidChangeEventEmitter = new vscode.EventEmitter<vscode.FileChangeEvent[]>();
-	}
-
-    get onDidChangeFile(): vscode.Event<vscode.FileChangeEvent[]> {
-		return this._onDidChangeEventEmitter.event;
-	}
-
-	watch(uri: vscode.Uri, options: { recursive: boolean; excludes: string[]; }): vscode.Disposable {
-		const watcher = fs.watch(uri.fsPath, { recursive: options.recursive }, async (event: string, filename: string | Buffer) => {
-			const filepath = path.join(uri.fsPath, _.normalizeNFC(filename.toString()));
-
-			// TODO support excludes (using minimatch library?)
-
-			this._onDidChangeEventEmitter.fire([{
-				type: event === 'change' ? vscode.FileChangeType.Changed : await _.exists(filepath) ? vscode.FileChangeType.Created : vscode.FileChangeType.Deleted,
-				uri: uri.with({ path: filepath })
-			} as vscode.FileChangeEvent]);
-		});
-
-		return { dispose: () => watcher.close() };
-	}
-
-	stat(uri: vscode.Uri): vscode.FileStat | Thenable<vscode.FileStat> {
-		return this._stat(uri.fsPath);
-	}
-
-	async _stat(path: string): Promise<vscode.FileStat> {
-		return new FileStat(await _.stat(path));
-	}
-
-	readDirectory(uri: vscode.Uri): [string, vscode.FileType][] | Thenable<[string, vscode.FileType][]> {
-		return this._readDirectory(uri);
-	}
-
-	async _readDirectory(uri: vscode.Uri): Promise<[string, vscode.FileType][]> {
-		const children = await _.readdir(uri.fsPath);
-
-		const result: [string, vscode.FileType][] = [];
-		for (let i = 0; i < children.length; i++) {
-			const child = children[i];
-            if(child.startsWith(".")) continue;
-			const stat = await this._stat(path.join(uri.fsPath, child));
-			result.push([child, stat.type]);
-		}
-
-		return Promise.resolve(result);
-	}
-
     parseCucumberStepDefFile(uri: vscode.Uri): [string, CucumberJSType][] | Thenable<[string, CucumberJSType][]> {
 		return this._parseCucumberStepDefFile(uri);
 	}
@@ -486,32 +440,6 @@ export class CucumberStepDefDataProvider implements vscode.TreeDataProvider<Entr
         return Promise.resolve(result);
     }
 
-    parseCucumberScenario(uri: vscode.Uri,featureName: string) {
-		return this._parseCucumberScenario(uri, featureName);
-    }
-
-    async _parseCucumberScenario(uri: vscode.Uri,featureName: string): Promise<[string, CucumberJSType][]>  {
-        const fileContent = await this.readFile(uri);
-
-        //Do NOT handle multiple feature in one file
-		// const strFileContent = fileContent.toString();
-        // const strReFeature = `${featureName}([\\d\\D]+?)`;
-		// const reFeature = new RegExp(strReFeature);
-        // const featureContent = strFileContent.match(reFeature)[0];
-        // console.log(featureContent.toLocaleString());
-
-        const reScenario = /^\s+Scenario:(.+)/gim;
-        console.log(fileContent.toString().match(reScenario));
-        const scenarios = fileContent.toString().match(reScenario)!;
-		const result: [string, CucumberType][] = [];
-        for(let i = 0; i < scenarios.length; i++) {
-            const scenario = scenarios[i];
-            result.push([scenario, CucumberType.Scenario]);
-        }
-
-        return Promise.resolve(result);
-    }
-
     async jumpToFile(uri: vscode.Uri) {
 		const pathArray = uri.fsPath.toString().split("/");
 		const stepName = pathArray[pathArray.length - 1];
@@ -528,65 +456,6 @@ export class CucumberStepDefDataProvider implements vscode.TreeDataProvider<Entr
 				return;
 			}
 		}
-	}
-
-	createDirectory(uri: vscode.Uri): void | Thenable<void> {
-		return _.mkdir(uri.fsPath);
-	}
-
-	readFile(uri: vscode.Uri): Uint8Array | Thenable<Uint8Array> {
-		return _.readfile(uri.fsPath);
-	}
-
-	writeFile(uri: vscode.Uri, content: Uint8Array, options: { create: boolean; overwrite: boolean; }): void | Thenable<void> {
-		return this._writeFile(uri, content, options);
-	}
-
-	async _writeFile(uri: vscode.Uri, content: Uint8Array, options: { create: boolean; overwrite: boolean; }): Promise<void> {
-		const exists = await _.exists(uri.fsPath);
-		if (!exists) {
-			if (!options.create) {
-				throw vscode.FileSystemError.FileNotFound();
-			}
-
-			await _.mkdir(path.dirname(uri.fsPath));
-		} else {
-			if (!options.overwrite) {
-				throw vscode.FileSystemError.FileExists();
-			}
-		}
-
-		return _.writefile(uri.fsPath, content as Buffer);
-	}
-
-	delete(uri: vscode.Uri, options: { recursive: boolean; }): void | Thenable<void> {
-		if (options.recursive) {
-			return _.rmrf(uri.fsPath);
-		}
-
-		return _.unlink(uri.fsPath);
-	}
-
-	rename(oldUri: vscode.Uri, newUri: vscode.Uri, options: { overwrite: boolean; }): void | Thenable<void> {
-		return this._rename(oldUri, newUri, options);
-	}
-
-	async _rename(oldUri: vscode.Uri, newUri: vscode.Uri, options: { overwrite: boolean; }): Promise<void> {
-		const exists = await _.exists(newUri.fsPath);
-		if (exists) {
-			if (!options.overwrite) {
-				throw vscode.FileSystemError.FileExists();
-			} else {
-				await _.rmrf(newUri.fsPath);
-			}
-		}
-
-		const parentExists = await _.exists(path.dirname(newUri.fsPath));
-		if (!parentExists) {
-			await _.mkdir(path.dirname(newUri.fsPath));
-		}
-
-		return _.rename(oldUri.fsPath, newUri.fsPath);
 	}
 
     onDidChangeTreeData?: vscode.Event<void | EntryItem | null | undefined> | undefined;
@@ -611,17 +480,7 @@ export class CucumberStepDefDataProvider implements vscode.TreeDataProvider<Entr
                 // console.log(fileContent);
                 const children = await this.parseCucumberStepDefFile(element.uri);
                 return children.map(([name, type]) => ({ uri: vscode.Uri.file(path.join(element.uri.fsPath, name)), type }));
-            }
-            if (element.type === CucumberType.Feature) {
-                // const fileContent = await this.parseCucumberFeatureFile(element.uri);
-                // console.log(fileContent);
-				const pathArray = element.uri.fsPath.toString().split("/");
-				const featureName = pathArray[pathArray.length-1];
-				const filePath = element.uri.fsPath.toString().replace(`/${featureName}`, "");
-                const children = await this.parseCucumberScenario(vscode.Uri.file(filePath), featureName);
-                return children.map(([name, type]) => ({ uri: vscode.Uri.file(path.join(element.uri.fsPath, name)), type }));
-            }
-                
+            }   
             const children = await this.readDirectory(element.uri);
             return children.map(([name, type]) => ({ uri: vscode.Uri.file(path.join(element.uri.fsPath, name)), type }));
 		}
