@@ -283,6 +283,16 @@ export class CucumberFileProvider implements  vscode.FileSystemProvider {
 
 		return _.rename(oldUri.fsPath, newUri.fsPath);
 	}
+
+	//jump to head of the file
+	async jumpToFile(uri: vscode.Uri) {
+		vscode.window.showTextDocument(uri);
+		const editor = vscode.window.activeTextEditor!;
+		const range = editor.document.lineAt(0).range;
+		editor.selection =  new vscode.Selection(range.start, range.end);
+		editor.revealRange(range);
+	}
+
 }
 
 
@@ -331,23 +341,45 @@ export class CucumberFeatureDataProvider extends CucumberFileProvider implements
         const scenarios = fileContent.toString().match(reScenario)!;
 		const result: [string, CucumberType][] = [];
         for(let i = 0; i < scenarios.length; i++) {
-            const scenario = scenarios[i];
+            const scenario = scenarios[i].trim();
             result.push([scenario, CucumberType.Scenario]);
         }
 
         return Promise.resolve(result);
     }
 
-    async jumpToFile(uri: vscode.Uri) {
+	async jumpToFeature(uri: vscode.Uri) {
 		const pathArray = uri.fsPath.toString().split("/");
+
+		//for a scenario
+		const featureName = pathArray[pathArray.length - 1];
+		const scenarioFilePath = uri.fsPath.toString().replace(`/${featureName}`, "");
+		const fileContent = await this.readFile(vscode.Uri.file(scenarioFilePath));
+		const fileContentArray = fileContent.toString().split("\n");
+		for (let i = 0;i < fileContentArray.length; i++){
+			if(fileContentArray[i].includes(featureName)){
+				vscode.window.showTextDocument(vscode.Uri.file(scenarioFilePath));
+				const editor = vscode.window.activeTextEditor!;
+				const range = editor.document.lineAt(i).range;
+				editor.selection =  new vscode.Selection(range.start, range.end);
+				editor.revealRange(range);
+				return;
+			}
+		}
+	}
+
+	async jumpToScenario(uri: vscode.Uri) {
+		const pathArray = uri.fsPath.toString().split("/");
+
+		//for a scenario
 		const scenarioName = pathArray[pathArray.length - 1];
 		const featureName = pathArray[pathArray.length - 2];
-		const filePath = uri.fsPath.toString().replace(`/${scenarioName}`, "").replace(`/${featureName}`, "");
-		const fileContent = await this.readFile(vscode.Uri.file(filePath));
+		const scenarioFilePath = uri.fsPath.toString().replace(`/${scenarioName}`, "").replace(`/${featureName}`, "");
+		const fileContent = await this.readFile(vscode.Uri.file(scenarioFilePath));
 		const fileContentArray = fileContent.toString().split("\n");
 		for (let i = 0;i < fileContentArray.length; i++){
 			if(fileContentArray[i].includes(scenarioName)){
-				vscode.window.showTextDocument(vscode.Uri.file(filePath));
+				vscode.window.showTextDocument(vscode.Uri.file(scenarioFilePath));
 				const editor = vscode.window.activeTextEditor!;
 				const range = editor.document.lineAt(i).range;
 				editor.selection =  new vscode.Selection(range.start, range.end);
@@ -362,8 +394,8 @@ export class CucumberFeatureDataProvider extends CucumberFileProvider implements
 		const treeItem = new vscode.TreeItem(element.uri, element.type === CucumberType.Scenario ? vscode.TreeItemCollapsibleState.None : vscode.TreeItemCollapsibleState.Collapsed);
 
         if (element.type === vscode.FileType.File) {
-			treeItem.command = { command: 'extension.openFile', title: "Open File", arguments: [element.uri] };
-			treeItem.contextValue = 'file';
+			treeItem.command = { command: 'extension.openFeatureFile', title: "Open Feature File", arguments: [element.uri] };
+			treeItem.contextValue = 'featurefile';
 		}
         if (element.type === CucumberType.Scenario) {
 			treeItem.command = { command: 'extension.openScenario', title: "Open Scenario", arguments: [element.uri] };
@@ -433,27 +465,32 @@ export class CucumberStepDefDataProvider extends CucumberFileProvider implements
         const features = fileContent.toString().match(reWhen)!;
 		const result: [string, CucumberType][] = [];
         for(let i = 0; i < features.length; i++) {
-            const feature = features[i];
+            const feature = features[i].trim();
             result.push([feature, CucumberType.StepDef]);
         }
 
         return Promise.resolve(result);
     }
 
-    async jumpToFile(uri: vscode.Uri) {
+	async jumpToStepDef(uri: vscode.Uri) {
+
 		const pathArray = uri.fsPath.toString().split("/");
-		const stepName = pathArray[pathArray.length - 1];
-		const filePath = uri.fsPath.toString().replace(`/${stepName}`, "");
-		const fileContent = await this.readFile(vscode.Uri.file(filePath));
-		const fileContentArray = fileContent.toString().split("\n");
-		for (let i = 0;i < fileContentArray.length; i++){
-			if(fileContentArray[i].includes(stepName)){
-				vscode.window.showTextDocument(vscode.Uri.file(filePath));
-				const editor = vscode.window.activeTextEditor!;
-				const range = editor.document.lineAt(i).range;
-				editor.selection =  new vscode.Selection(range.start, range.end);
-				editor.revealRange(range);
-				return;
+
+		//for a step definition
+		if(pathArray[pathArray.length - 2].endsWith(".js")){
+			const stepName = pathArray[pathArray.length - 1];
+			const filePath = uri.fsPath.toString().replace(`/${stepName}`, "");
+			const fileContent = await this.readFile(vscode.Uri.file(filePath));
+			const fileContentArray = fileContent.toString().split("\n");
+			for (let i = 0;i < fileContentArray.length; i++){
+				if(fileContentArray[i].includes(stepName)){
+					vscode.window.showTextDocument(vscode.Uri.file(filePath));
+					const editor = vscode.window.activeTextEditor!;
+					const range = editor.document.lineAt(i).range;
+					editor.selection =  new vscode.Selection(range.start, range.end);
+					editor.revealRange(range);
+					return;
+				}
 			}
 		}
 	}
@@ -463,11 +500,11 @@ export class CucumberStepDefDataProvider extends CucumberFileProvider implements
 		const treeItem = new vscode.TreeItem(element.uri, element.type === CucumberType.StepDef ? vscode.TreeItemCollapsibleState.None : vscode.TreeItemCollapsibleState.Collapsed);
 
         if (element.type === vscode.FileType.File) {
-			treeItem.command = { command: 'extension.openFile', title: "Open File", arguments: [element.uri] };
-			treeItem.contextValue = 'file';
+			treeItem.command = { command: 'extension.openStepFile', title: "Open Stef File", arguments: [element.uri] };
+			treeItem.contextValue = 'stepfile';
 		}
         if (element.type === CucumberType.StepDef) {
-			treeItem.command = { command: 'extension.openStepDef', title: "Open StepDef", arguments: [element.uri] };
+			treeItem.command = { command: 'extension.openStepDef', title: "Open Step Definition", arguments: [element.uri] };
 			treeItem.contextValue = 'stepdef';
 		}
 		return treeItem;
