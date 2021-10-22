@@ -135,6 +135,7 @@ export class EntryItem extends vscode.TreeItem
     constructor(label: string, collapsibleState?: vscode.TreeItemCollapsibleState) {
         super(label, collapsibleState);
     }
+
 }
 
 export class FileStat implements vscode.FileStat {
@@ -306,12 +307,8 @@ export class CucumberFeatureDataProvider extends CucumberFileProvider implements
     async _parseCucumberFeatureFile(uri: vscode.Uri): Promise<[string, CucumberJSType][]>  {
         const fileContent = await this.readFile(uri);
 
-        console.log(fileContent.toLocaleString());
-
         const reFeatures = /^Feature:(.+)/gim;
 
-        console.log(fileContent.toString().match(reFeatures));
-        console.log(reFeatures.exec(fileContent.toString()));
         const features = fileContent.toString().match(reFeatures)!;
 		const result: [string, CucumberType][] = [];
         for(let i = 0; i < features.length; i++) {
@@ -337,7 +334,6 @@ export class CucumberFeatureDataProvider extends CucumberFileProvider implements
         // console.log(featureContent.toLocaleString());
 
         const reScenario = /^\s+Scenario:(.+)/gim;
-        console.log(fileContent.toString().match(reScenario));
         const scenarios = fileContent.toString().match(reScenario)!;
 		const result: [string, CucumberType][] = [];
         for(let i = 0; i < scenarios.length; i++) {
@@ -401,14 +397,20 @@ export class CucumberFeatureDataProvider extends CucumberFileProvider implements
 		const treeItem = new vscode.TreeItem(element.uri, element.type === CucumberType.Scenario ? vscode.TreeItemCollapsibleState.None : vscode.TreeItemCollapsibleState.Collapsed);
 
         if (element.type === vscode.FileType.File) {
+			treeItem.iconPath = path.join(__filename, "..", "..", "cucumber_16x16.png");
+
 			treeItem.command = { command: 'extension.openFeatureFile', title: "Open Feature File", arguments: [element.uri] };
 			treeItem.contextValue = 'featurefile';
 		}
         if (element.type === CucumberType.Scenario) {
+			treeItem.iconPath = path.join(__filename, "..", "..", "scenario_48x48.png");
+
 			treeItem.command = { command: 'extension.openScenario', title: "Open Scenario", arguments: [element.uri] };
 			treeItem.contextValue = 'scenario';
 		}
         if (element.type === CucumberType.Feature) {
+			treeItem.iconPath = path.join(__filename, "..", "..", "feature_47x47.png");
+
 			treeItem.command = { command: 'extension.openFeature', title: "Open Feature", arguments: [element.uri] };
 			treeItem.contextValue = 'feature';
 		}
@@ -426,13 +428,14 @@ export class CucumberFeatureDataProvider extends CucumberFileProvider implements
             if (element.type === CucumberType.Feature) {
                 // const fileContent = await this.parseCucumberFeatureFile(element.uri);
                 // console.log(fileContent);
+
 				const pathArray = element.uri.fsPath.toString().split("/");
 				const featureName = pathArray[pathArray.length-1];
 				const filePath = element.uri.fsPath.toString().replace(`/${featureName}`, "");
                 const children = await this.parseCucumberScenario(vscode.Uri.file(filePath), featureName);
                 return children.map(([name, type]) => ({ uri: vscode.Uri.file(path.join(element.uri.fsPath, name)), type }));
-            }
-                
+            }            
+
             const children = await this.readDirectory(element.uri);
             return children.map(([name, type]) => ({ uri: vscode.Uri.file(path.join(element.uri.fsPath, name)), type }));
 		}
@@ -464,11 +467,8 @@ export class CucumberStepDefDataProvider extends CucumberFileProvider implements
     async _parseCucumberStepDefFile(uri: vscode.Uri): Promise<[string, CucumberJSType][]>  {
         const fileContent = await this.readFile(uri);
 
-        console.log(fileContent.toLocaleString());
-
         const reWhen = /^(When|Then|Given)(.+)/gim;
 
-        console.log(fileContent.toString().match(reWhen));
         const features = fileContent.toString().match(reWhen)!;
 		const result: [string, CucumberType][] = [];
         for(let i = 0; i < features.length; i++) {
@@ -514,10 +514,12 @@ export class CucumberStepDefDataProvider extends CucumberFileProvider implements
 		const treeItem = new vscode.TreeItem(element.uri, element.type === CucumberType.StepDef ? vscode.TreeItemCollapsibleState.None : vscode.TreeItemCollapsibleState.Collapsed);
 
         if (element.type === vscode.FileType.File) {
+			treeItem.iconPath = path.join(__filename, "..", "..", "cucumberjs_44x36.png");
 			treeItem.command = { command: 'extension.openStepFile', title: "Open Stef File", arguments: [element.uri] };
 			treeItem.contextValue = 'stepfile';
 		}
         if (element.type === CucumberType.StepDef) {
+			treeItem.iconPath = path.join(__filename, "..", "..", "stepdef_17x17.png");
 			treeItem.command = { command: 'extension.openStepDef', title: "Open Step Definition", arguments: [element.uri] };
 			treeItem.contextValue = 'stepdef';
 		}
