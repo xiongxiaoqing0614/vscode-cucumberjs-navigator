@@ -388,8 +388,15 @@ export class CucumberFeatureDataProvider extends CucumberFileProvider implements
 			}
 		}
 	}
+	
+	private _onDidChangeTreeData: vscode.EventEmitter< EntryItem | undefined > = new vscode.EventEmitter<EntryItem | undefined>();
 
-    onDidChangeTreeData?: vscode.Event<void | EntryItem | null | undefined> | undefined;
+    readonly onDidChangeTreeData: vscode.Event<EntryItem | undefined> = this._onDidChangeTreeData.event;
+
+    refresh(): void {
+        this._onDidChangeTreeData.fire(undefined);
+    }
+
     getTreeItem(element: EntryItem): vscode.TreeItem | Thenable<vscode.TreeItem> {
 		const treeItem = new vscode.TreeItem(element.uri, element.type === CucumberType.Scenario ? vscode.TreeItemCollapsibleState.None : vscode.TreeItemCollapsibleState.Collapsed);
 
@@ -495,7 +502,14 @@ export class CucumberStepDefDataProvider extends CucumberFileProvider implements
 		}
 	}
 
-    onDidChangeTreeData?: vscode.Event<void | EntryItem | null | undefined> | undefined;
+	private _onDidChangeTreeData: vscode.EventEmitter< EntryItem | undefined > = new vscode.EventEmitter<EntryItem | undefined>();
+
+    readonly onDidChangeTreeData: vscode.Event<EntryItem | undefined> = this._onDidChangeTreeData.event;
+
+    refresh(): void {
+        this._onDidChangeTreeData.fire(undefined);
+    }
+	
     getTreeItem(element: EntryItem): vscode.TreeItem | Thenable<vscode.TreeItem> {
 		const treeItem = new vscode.TreeItem(element.uri, element.type === CucumberType.StepDef ? vscode.TreeItemCollapsibleState.None : vscode.TreeItemCollapsibleState.Collapsed);
 

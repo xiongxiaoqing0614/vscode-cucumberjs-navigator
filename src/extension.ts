@@ -17,6 +17,8 @@ export function activate(context: vscode.ExtensionContext) {
 	vscode.commands.registerCommand('extension.openScenario', uri => cucumberFeatureData.jumpToScenario(uri));
 	vscode.commands.registerCommand('extension.openFeature', uri => cucumberFeatureData.jumpToFeature(uri));
 	vscode.commands.registerCommand('extension.openFeatureFile', uri => cucumberFeatureData.jumpToFile(uri));
+	vscode.commands.registerCommand('cucumberjs_features.refresh', () => cucumberFeatureData.refresh());
+
 
 	//register steps view
 	const cucumberStepDefData = new cucumberjs.CucumberStepDefDataProvider();
@@ -24,6 +26,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	vscode.commands.registerCommand('extension.openStepFile', uri => cucumberStepDefData.jumpToFile(uri));
 	vscode.commands.registerCommand('extension.openStepDef', uri => cucumberStepDefData.jumpToStepDef(uri));
+	vscode.commands.registerCommand('cucumberjs_steps.refresh', () => cucumberStepDefData.refresh());
 
 	// Use the console to output diagnostic information (console.log) and errors (console.error)
 	// This line of code will only be executed once when your extension is activated

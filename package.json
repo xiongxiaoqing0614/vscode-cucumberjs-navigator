@@ -33,6 +33,30 @@
 					"name": "steps"
 				}
 			]
+		},
+		"commands": [
+			{
+				"command": "cucumberjs_features.refresh",
+				"title": "Refresh"
+			},			
+			{
+				"command": "cucumberjs_steps.refresh",
+				"title": "Refresh"
+			}
+		],
+		"menus": {
+			"view/title": [
+				{
+					"command": "cucumberjs_features.refresh",
+					"when": "view == cucumberjs_features",
+					"group": "navigation"
+				},
+				{
+					"command": "cucumberjs_steps.refresh",
+					"when": "view == cucumberjs_steps",
+					"group": "navigation"
+				}
+			]
 		}
 	},
 	"scripts": {
