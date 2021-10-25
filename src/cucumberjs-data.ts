@@ -397,19 +397,19 @@ export class CucumberFeatureDataProvider extends CucumberFileProvider implements
 		const treeItem = new vscode.TreeItem(element.uri, element.type === CucumberType.Scenario ? vscode.TreeItemCollapsibleState.None : vscode.TreeItemCollapsibleState.Collapsed);
 
         if (element.type === vscode.FileType.File) {
-			treeItem.iconPath = path.join(__filename, "..", "..", "cucumber_16x16.png");
+			treeItem.iconPath = path.join(__filename, "..", "..", "resource/cucumber_icon.png");
 
 			treeItem.command = { command: 'extension.openFeatureFile', title: "Open Feature File", arguments: [element.uri] };
 			treeItem.contextValue = 'featurefile';
 		}
         if (element.type === CucumberType.Scenario) {
-			treeItem.iconPath = path.join(__filename, "..", "..", "scenario_48x48.png");
+			treeItem.iconPath = path.join(__filename, "..", "..", "resource/cucumber_icon_file.png");
 
 			treeItem.command = { command: 'extension.openScenario', title: "Open Scenario", arguments: [element.uri] };
 			treeItem.contextValue = 'scenario';
 		}
         if (element.type === CucumberType.Feature) {
-			treeItem.iconPath = path.join(__filename, "..", "..", "feature_47x47.png");
+			treeItem.iconPath = path.join(__filename, "..", "..", "resource/features.png");
 
 			treeItem.command = { command: 'extension.openFeature', title: "Open Feature", arguments: [element.uri] };
 			treeItem.contextValue = 'feature';
@@ -514,12 +514,12 @@ export class CucumberStepDefDataProvider extends CucumberFileProvider implements
 		const treeItem = new vscode.TreeItem(element.uri, element.type === CucumberType.StepDef ? vscode.TreeItemCollapsibleState.None : vscode.TreeItemCollapsibleState.Collapsed);
 
         if (element.type === vscode.FileType.File) {
-			treeItem.iconPath = path.join(__filename, "..", "..", "cucumberjs_44x36.png");
+			treeItem.iconPath = path.join(__filename, "..", "..", "resource/js.png");
 			treeItem.command = { command: 'extension.openStepFile', title: "Open Stef File", arguments: [element.uri] };
 			treeItem.contextValue = 'stepfile';
 		}
         if (element.type === CucumberType.StepDef) {
-			treeItem.iconPath = path.join(__filename, "..", "..", "stepdef_17x17.png");
+			treeItem.iconPath = path.join(__filename, "..", "..", "resource/js_1.png");
 			treeItem.command = { command: 'extension.openStepDef', title: "Open Step Definition", arguments: [element.uri] };
 			treeItem.contextValue = 'stepdef';
 		}
