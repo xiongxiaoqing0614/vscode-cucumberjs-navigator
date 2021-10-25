@@ -2,7 +2,7 @@
   "name": "vscode-cucumberjs-navigator",
 	"displayName": "vscode-cucumberjs-navigator",
 	"description": "This extension provides tree view to help you to navigate your current scenarios and step definitions.",
-	"icon": "cucumber-js.png",
+	"icon": "resource/cucumber-js.png",
 	"version": "0.0.4",
 	"repository": {
 		"type": "git",
