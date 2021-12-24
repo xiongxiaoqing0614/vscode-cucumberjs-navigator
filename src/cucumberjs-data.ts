@@ -333,7 +333,7 @@ export class CucumberFeatureDataProvider extends CucumberFileProvider implements
         // const featureContent = strFileContent.match(reFeature)[0];
         // console.log(featureContent.toLocaleString());
 
-        const reScenario = /^\s+Scenario:(.+)/gim;
+        const reScenario = /^\s+Scenario(.+)/gim;
         const scenarios = fileContent.toString().match(reScenario)!;
 		const result: [string, CucumberType][] = [];
         for(let i = 0; i < scenarios.length; i++) {
